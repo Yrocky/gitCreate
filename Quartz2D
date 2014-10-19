@@ -1,0 +1,295 @@
+
+- (void)drawRect:(CGRect)rect
+{
+    [self drawClip];
+}
+
+// 进行裁剪
+- (void) drawClip{
+
+    CGContextRef comm = UIGraphicsGetCurrentContext();
+    
+    // 获得图形上下文桟
+    CGContextSaveGState(comm);
+    
+    // 裁剪
+    CGContextAddEllipseInRect(comm, CGRectMake(30, 20, 200, 200));
+    [[UIColor redColor] set];
+    CGContextClip(comm);
+    CGContextFillPath(comm);
+    
+//    CGContextRestoreGState(comm);
+    
+    // 将图片画进去,
+    UIImage *image = [UIImage imageNamed:@"2"];
+//    [image drawAtPoint:CGPointMake(0, 10)];
+    [image drawInRect:CGRectMake(30, 20, 200, 200)];
+    
+    CGContextRestoreGState(comm);
+    
+//    CGContextAddRect(comm, CGRectMake(10, 10, 200, 200));
+    
+    [[UIColor blackColor] set];
+    
+    CGContextFillPath(comm);
+
+}
+
+// 矩阵操作
+- (void) drawCTM{
+
+    CGContextRef ctx = UIGraphicsGetCurrentContext();
+    
+    // 保存一个图形上下文桟
+    CGContextSaveGState(ctx);
+    
+    CGContextRotateCTM(ctx, M_PI_4 * 0.3);
+    CGContextScaleCTM(ctx, 0.5, 0.5);
+    CGContextTranslateCTM(ctx, 0, 150);
+    
+    CGContextAddRect(ctx, CGRectMake(10, 10, 50, 50));
+    
+    CGContextStrokePath(ctx);
+    
+    // 将上下文桟推出
+    CGContextRestoreGState(ctx);
+    
+    // 进行二次绘画
+    CGContextAddEllipseInRect(ctx, CGRectMake(100, 100, 100, 100));
+    CGContextMoveToPoint(ctx, 100, 100);
+    CGContextAddLineToPoint(ctx, 200, 250);
+    
+    CGContextStrokePath(ctx);
+}
+
+// 图形上下文桟
+- (void) drawContextState{
+
+    CGContextRef comm = UIGraphicsGetCurrentContext();
+    
+    // 保存一个图形上下文桟
+    CGContextSaveGState(comm);
+    
+    // 1.然后进行绘画
+    CGContextAddEllipseInRect(comm, CGRectMake(10, 10, 200, 300));
+    
+    // set就可以将填充和边界颜色设置好
+    [[UIColor redColor] set];
+    
+    // 进行渲染
+    CGContextStrokePath(comm);
+    
+    // 进行上下文桟的出栈, 将图形上下文变为最初最纯洁的状态
+    CGContextRestoreGState(comm);
+    
+    // 2.进行第二个图形的绘制
+    CGContextAddEllipseInRect(comm, CGRectMake(200, 100, 50, 50));
+    CGContextFillPath(comm);
+}
+
+// 画文字
+- (void) drawString{
+
+    CGRect rect = CGRectMake(10, 100, 300, 100);
+    CGContextRef comm = UIGraphicsGetCurrentContext();
+    CGContextSetLineWidth(comm, 2);
+    CGContextSetStrokeColorWithColor(comm, kCGColor(redColor));
+    CGContextFillRect(comm, rect);
+    
+    NSString *string = @"别看了，这个不是Label";
+    NSMutableDictionary *attributDict = [NSMutableDictionary dictionary];
+    [attributDict setValuesForKeysWithDictionary:@{NSFontAttributeName:[UIFont systemFontOfSize:30],NSForegroundColorAttributeName :[UIColor orangeColor]}];
+    [string drawInRect:rect withAttributes:attributDict];
+}
+
+// 将CGPath画出来路径,赋给CAAnimation进行展示,打酱油的
+- (void) drawPath{
+
+    CGContextRef comm = UIGraphicsGetCurrentContext();
+    
+    // 开始一个路径
+    CAKeyframeAnimation *keyAnimation = [CAKeyframeAnimation animation];
+    keyAnimation.delegate = self;// 这个代理不用遵守协议,说明是NSObject协议
+    keyAnimation.keyPath = @"position";
+    keyAnimation.duration = 3;
+    keyAnimation.removedOnCompletion = NO;
+    keyAnimation.fillMode = kCAFillModeForwards;
+    
+    CGMutablePathRef path = CGPathCreateMutable();// 创建一条路径
+    CGPathMoveToPoint(path, NULL, 50, 50);// quartz2D中的绘画或者路径都必须有个cirrentPoint
+//    CGPathAddEllipseInRect(path, NULL, rect);// 这个方法传进来的是可变的路径
+//    CGPathAddArcToPoint(path, NULL, 0, 0, 100, 500, 150);// 画一个圆弧路径
+//    CGPathAddQuadCurveToPoint(path, NULL, 10, 100, 300, 300);// 画一个控制点的贝塞尔曲线路径
+    CGPathAddCurveToPoint(path, NULL, 10, 300, 300, 40, 50, 400);// 画一个两个控制点的贝塞尔曲线路径
+    // 将路径赋值给动画,让动画沿着路径进行动画
+    keyAnimation.path = path;
+    CGPathRelease(path);// 将路径进行销毁
+
+    
+    CGContextFillPath(comm);
+}
+
+// 画虚线
+- (void) drawLineDash{
+
+    CGContextRef comm = UIGraphicsGetCurrentContext();
+    CGContextSetLineWidth(comm, 15);
+    // 与透明度有关
+//    CGContextSetPatternPhase(<#CGContextRef context#>, <#CGSize phase#>)
+
+//    CGContextMoveToPoint(comm, 10, 100);
+//    CGContextAddQuadCurveToPoint(comm, 100, 300, 200, 150);
+    
+//    CGContextAddLines(<#CGContextRef c#>, <#const CGPoint *points#>, <#size_t count#>)
+    // 创建一个装有多个点的c语言数组
+    CGPoint pointArray[] = {CGPointMake(10, 100),CGPointMake(100, 100),CGPointMake(200, 300)};
+    CGContextAddLines(comm, pointArray, 3);// 最后一个参数是决定数组中有几个是能够用的
+
+//    CGContextSetLineDash(<#CGContextRef c#>, <#CGFloat phase#>, <#const CGFloat *lengths#>, <#size_t count#>)
+    // c语言的数组
+    CGFloat dashArray[] = {20,1,10,4,30,3,1,2,1};
+    // phase 月相，阶段
+    CGContextSetLineDash(comm, 10, dashArray, 10);
+    
+    CGContextStrokePath(comm);
+}
+
+// 画曲线 (二次贝塞尔曲线)Quadcurves 曲线
+// 这个曲线和下面的arc不一样，它不会在弧度和半径不能够组成一个圆的时候画出来一个线连接startPoint和弧线的起始点，
+- (void) drawQuadCurves{
+
+    CGContextRef comm = UIGraphicsGetCurrentContext();
+    CGContextSetLineWidth(comm, 5);
+    CGContextSetStrokeColorWithColor(comm, kCGColor(purpleColor));
+    CGContextSetLineCap(comm, kCGLineCapRound);
+    CGContextSetLineJoin(comm, kCGLineJoinMiter);
+    
+    CGContextMoveToPoint(comm, 50, 100);// startPoint
+    CGContextAddLineToPoint(comm, 200,10);// controlPoint
+    CGContextAddLineToPoint(comm, 300, 250);//endPoint
+    CGContextMoveToPoint(comm, 50, 100);//currentPoint
+    
+    CGContextAddQuadCurveToPoint(comm, 200, 10, 300, 250);
+    
+    CGContextStrokePath(comm);
+}
+
+// 画曲线 (三次贝塞尔曲线)Curves 曲线
+- (void) drawCurves{
+
+    CGContextRef comm = UIGraphicsGetCurrentContext();
+    CGContextSetLineWidth(comm, 5);
+    CGContextSetStrokeColorWithColor(comm, kCGColor(orangeColor));
+    
+    
+    CGContextMoveToPoint(comm, 10, 100);// startPoint
+    CGContextAddLineToPoint(comm, 60, 10);//controlPoint1
+    CGContextAddLineToPoint(comm, 200, 300);//controlPoint2
+    CGContextAddLineToPoint(comm, 300, 100);//endPoint
+//    CGContextClosePath(comm);// 将点连起来
+    CGContextMoveToPoint(comm, 10, 100);// 从新得到起始点，因为只要连接过点，那么添加的点就是currentPoint
+    // 贝塞尔曲线的画法
+    CGContextAddCurveToPoint(comm, 60, 10, 200, 300, 300, 100);
+    
+    CGContextStrokePath(comm);
+}
+// 画弧线 arc 弧线,圆上的一段弧线
+- (void) drawArc{
+    CGContextRef comm = UIGraphicsGetCurrentContext();
+    CGContextSetLineWidth(comm, 5);
+    CGContextSetStrokeColorWithColor(comm, kCGColor(redColor));
+    
+    CGContextMoveToPoint(comm, 100, 100);
+    CGContextAddLineToPoint(comm, 100, 200);
+    CGContextAddLineToPoint(comm, 300, 200);
+    CGContextMoveToPoint(comm, 100, 100);
+    // 画一个弧线
+    // 在能够组成一个圆的前提下画圆，但是如果半径过大，弧度过小不能画圆那就将起点沿着切线方向向外延伸
+    CGContextAddArcToPoint(comm, 100, 200, 300, 200, 150);
+    
+    CGContextStrokePath(comm);
+    
+}
+
+// 画菱形
+// 这里面的枚举都是kCG开头的
+- (void) drawDiamond{
+
+    // 拿到图形上下文
+    CGContextRef comm = UIGraphicsGetCurrentContext();
+    
+    // 进行画笔的设置
+    CGContextSetStrokeColorWithColor(comm, kCGColor(redColor));
+    CGContextSetLineWidth(comm, 10);
+    
+    // 设置接点
+    CGContextSetLineJoin(comm, kCGLineJoinRound);
+    CGContextSetLineCap(comm, kCGLineCapSquare);
+    
+#if 0
+    // 进行点的排布
+    CGContextMoveToPoint(comm, 10, 10);
+    CGContextAddLineToPoint(comm, 200, 10);
+    CGContextAddLineToPoint(comm, 230, 200);
+    CGContextAddLineToPoint(comm, 40, 200);
+    CGContextClosePath(comm);
+#else
+    
+    CGPoint points[] = {CGPointMake(10, 10),CGPointMake(200, 100),CGPointMake(200, 200),CGPointMake(40, 200),CGPointMake(10, 10)};
+    CGContextAddLines(comm, points, 5);
+#endif
+    // 将图形上下文画出来
+    CGContextStrokePath(comm);
+}
+
+// 画图片
+- (void) drawImage{
+
+//    CGContextRef comm = UIGraphicsGetCurrentContext();
+    UIImage *image = [UIImage imageNamed:@"animation"];
+//    // 这里是倒着的
+    CGRect rect = CGRectMake(10, -10, 300, 300);
+//    CGContextDrawImage(comm, rect, image.CGImage);
+
+    // 按照实际大小平铺进rect中
+    [image drawAsPatternInRect:rect];
+    
+//    CGContextTranslateCTM(comm, 0,rect.size.height);
+//    CGContextScaleCTM(comm, 1.0, -1.0);
+    // 这个可以正常显示，但是，那要是这样就不需要图形上下文，但其实还是需要图形上下文的
+//    [image drawInRect:CGRectMake(10, 10, 200, 200)];
+    
+}
+// 画矩形 画圆 画椭圆
+- (void) drawRectangle{
+    
+    CGContextRef comm = UIGraphicsGetCurrentContext();
+    CGContextSetLineWidth(comm, 3);
+    CGContextSetStrokeColorWithColor(comm, kCGColor(redColor));
+    CGRect rect = CGRectMake(10, 10, 200, 100);
+    CGContextAddRect(comm, rect);
+    CGContextSetFillColorWithColor(comm, kCGColor(orangeColor));
+//    CGContextAddEllipseInRect(comm, rect);    
+    CGContextDrawPath(comm, kCGPathFillStroke);
+
+    
+// 下面的API虽然可以快速的画出来东西，但是不能将边框和内容同时显示出来
+//    CGContextFillRect(comm, rect);// 这个API可以直接在矩形内部填充图形上下文
+//    CGContextFillEllipseInRect(comm, rect);// 这个API直接在矩形范围内部画圆 填充
+//    CGContextStrokeEllipseInRect(comm, rect);// 这个API画在矩形中画一个圆 边界线
+
+}
+// 画线
+- (void) drawLine{
+    
+    // 获得图形上下文内容
+    CGContextRef commm = UIGraphicsGetCurrentContext();
+    
+    CGContextSetLineWidth(commm, 5);
+    CGContextSetStrokeColorWithColor(commm, [UIColor orangeColor].CGColor);
+    CGContextMoveToPoint(commm, 10, 10);
+    CGContextAddLineToPoint(commm, 100, 200);
+    
+    // 画到图形上下文中
+    CGContextStrokePath(commm);
+}
