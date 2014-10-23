@@ -1,0 +1,93 @@
+
+**第一种框架构建**
+
+```
+使用UINavigationController作为UIWindow的根视图控制器，并且需要隐藏该导航控制器的NavigationBar，然后将该导航控制器的根视图控制器设置为一个UITabBarController(mainViewController)，将tabBarController的viewControllers设置为多个导航控制器，每一个导航控制器绑定一个UIViewController，每一个试图控制器就是一个微博的界面,在window中判断是否是首首次加载应用，是的话进入Guide界面和Login界面，不是首次加载直接进入Login界面，从Login界面根据总试图控制器popTo到根视图控制器(mainViewController)
+用到的方法有:
+
+    // 以everLaunched 这个字符串为key值，取出磁盘对应的bool值，对于首次启动程序的时候，这个值一定是NO
+    if (![[NSUserDefaults standardUserDefaults] boolForKey:@"everLanuched"]) {// 首次登陆
+        
+        [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"everLanuched"];
+        [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"firstLanuched"];
+        
+    }else { // 非首次登陆
+    
+        [[NSUserDefaults standardUserDefaults] setBool:NO forKey:@"firstLanuched"];
+    }
+    
+    // 非常重要的一点: 强制NSUserDefaults将标志位写进磁盘上
+    [[NSUserDefaults standardUserDefaults] synchronize];
+    
+    // 在程序出现的时候，总的导航栏不显示，他的作用仅仅是控制界面使用
+    _navigationController.navigationBarHidden = YES;
+    
+    // 如果是首次登陆，需要弹出用户引导界面
+    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"firstLanuched"]) {
+        
+        // 实例化guide对象，使用总的navigation推出来
+        YRGuideViewController *guide = [[YRGuideViewController alloc] init];
+        [self.navigationController pushViewController:guide animated:YES];
+        
+    } else{// 如果不是首次登陆，如果记住密码，直接进入主界面，没有记住密码，进入登陆界面
+
+        //  实例化login对象，使用总的navigation推出来
+        YRLoginViewController *login = [[YRLoginViewController alloc] init];
+        [self.navigationController pushViewController:login animated:YES];
+    }
+
+    self.window.rootViewController = _navigationController;
+
+```
+
+
+**第二种框架构建**
+
+```
+使用一个继承至NSObject的类添加枚举类型，进行VC的枚举，提供一个类方法传入枚举值返回相应的视图，这个类的作用就是第一种方法里面的总的导航视图一样
+
+	// 枚举类型(新语法)
+	typedef NS_ENUM(NSInteger, YRViewControllerType) {
+	
+	    YRViewControllerTypeGuideVC,
+	    YRViewControllerTypeLoginVC,
+	    YRViewControllerTypeMainVC
+	};
+	
+	// 公开的方法
+	+ (void)presentViewControllerWithType:(YRViewControllerType)type{
+	
+	    // 取得相应的VC类型
+	    UIViewController *viewController = [[[self alloc] init] controllerByType:type];
+	    
+	    // 取得当前window
+	    UIWindow *window = [[[UIApplication sharedApplication] delegate] window];
+	    
+	    // 将取得的window的根视图控制器设置为加载的不同的试图控制器
+	    window.rootViewController = viewController;
+	    
+	}
+	
+	// 私有的方法
+	- (UIViewController *)controllerByType:(YRViewControllerType)type{
+	
+	    UIViewController *viewController = nil;
+	    
+	    // 根据不同的类型加载不同的试图控制器
+	    switch (type) {
+	        case YRViewControllerTypeGuideVC:
+	            viewController = [[YRGuideViewController alloc] init];
+	            break;
+	        case YRViewControllerTypeLoginVC:
+	            viewController = [[YRLoginViewController alloc] init];
+	            break;
+	        case YRViewControllerTypeMainVC:
+	            viewController = [[YRMainViewController alloc] init];
+	            break;
+	        default:
+	            break;
+	    }
+	    return viewController;
+	}
+
+```
