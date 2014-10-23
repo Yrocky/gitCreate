@@ -1,0 +1,35 @@
+	
+	+(BOOL)isMobileNumber:(NSString *)mobileNumber{
+   
+   // 移动的正则语句
+	    NSString *cmAll = @"^1((3[5-9]|5[0-27-9]|8[2-478]|47|78)[0-9]|34[0-8])[0-9]{7}$";
+	    
+	    NSPredicate *cmAllPred = [NSPredicate predicateWithFormat:@"self matches %@",cmAll];
+	// 联通的正则语句
+	    NSString *cuAll = @"^1(3[0-2]|5[4-6]|8[56]|45|76)[0-9]{8}$";
+	    
+	    NSPredicate *cuAllPred = [NSPredicate predicateWithFormat:@"self matches %@",cuAll];
+	// 电信的正则语句
+	    NSString *ctAll = @"^1((33|53|8[01]|77)[0-9]|349)[0-9]{7}$";
+	    
+	    NSPredicate *ctAllPred = [NSPredicate predicateWithFormat:@"self matches %@",ctAll];
+	
+	    if ([cmAllPred evaluateWithObject:mobileNumber]) {
+	
+	        NSLog(@"China Mobile mobile number");
+	        return YES;
+	        
+	    }else if ([cuAllPred evaluateWithObject:mobileNumber]){
+	
+	        NSLog(@"China Unicom mobile number");
+	        return YES;
+	    }else if ([ctAllPred evaluateWithObject:mobileNumber]){
+	    
+	        NSLog(@"China Telecom mobile number");
+	        return YES;
+	    }else{
+	    
+	        NSLog(@"Doesn't a valid mobile number");
+	        return NO;
+	    }
+    }
