@@ -1,4 +1,4 @@
-gitCreate
+Tip
 =========
+存放一些代码和笔记
 
-test create one repository
